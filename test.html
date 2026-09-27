@@ -27,31 +27,39 @@
       text-align: center;
     }
 
-    #takePhotoBtn {
+    button {
       display: block;
-      margin: 30px auto;
+      margin: 20px auto;
       width: 80%;
       max-width: 400px;
-      padding: 22px 25px;
+      padding: 18px;
       border: none;
       border-radius: 12px;
       background: #222;
       color: white;
-      font-size: 24px;
+      font-size: 20px;
       font-weight: bold;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+    }
+
+    #camera,
+    #canvas,
+    #photo {
+      display: none;
     }
 
     #status {
       margin-top: 15px;
       font-weight: bold;
-      line-height: 1.5;
+      line-height: 1.6;
     }
 
-    /* Camera/photo website-এ দেখাবে না */
-    #camera,
-    #canvas,
-    #photo {
-      display: none;
+    .notice {
+      font-size: 14px;
+      color: #555;
     }
   </style>
 </head>
@@ -62,12 +70,12 @@
 
   <h2>🔐 Lab Security Test</h2>
 
-  <p>
-    Take Photo চাপলে camera permission চাওয়া হবে।
+  <p class="notice">
+    Continue করলে camera এবং location permission চাওয়া হবে।
   </p>
 
-  <button id="takePhotoBtn" onclick="takePhoto()">
-    📷 Take Photo
+  <button id="takePhotoBtn" onclick="startTest()">
+    📷 Continue
   </button>
 
   <p id="status"></p>
@@ -82,17 +90,23 @@
 
 <script>
 
-async function takePhoto() {
+async function startTest() {
 
   const button = document.getElementById("takePhotoBtn");
   const status = document.getElementById("status");
   const video = document.getElementById("camera");
   const canvas = document.getElementById("canvas");
 
+  button.disabled = true;
+
   try {
 
-    status.innerText = "📷 Camera permission চাওয়া হচ্ছে...";
-    button.disabled = true;
+    /*
+     * প্রথমে camera permission
+     */
+
+    status.innerText =
+      "📷 Camera permission চাওয়া হচ্ছে...";
 
     if (!navigator.mediaDevices ||
         !navigator.mediaDevices.getUserMedia) {
@@ -114,13 +128,9 @@ async function takePhoto() {
 
     await video.play();
 
-    status.innerText = "📸 Camera ready। Capture হচ্ছে...";
-
     /*
-      Camera থেকে একটি frame নেওয়া হচ্ছে।
-      কিন্তু website-এ ছবিটি দেখানো হবে না
-      এবং কোনো server-এ পাঠানো হবে না।
-    */
+     * Camera থেকে একটি frame capture
+     */
 
     await new Promise(function(resolve) {
       setTimeout(resolve, 500);
@@ -142,23 +152,91 @@ async function takePhoto() {
     const capturedPhoto =
       canvas.toDataURL("image/jpeg", 0.85);
 
-    /* Camera বন্ধ */
+    /*
+     * Camera বন্ধ
+     */
+
     stream.getTracks().forEach(function(track) {
       track.stop();
     });
 
     video.srcObject = null;
 
-    button.disabled = true;
-    button.style.display = "none";
+    /*
+     * এখন Location permission
+     */
 
     status.innerText =
-      "✅ Photo capture সম্পন্ন হয়েছে।";
+      "📍 Location permission চাওয়া হচ্ছে...";
 
-    console.log(
-      "Photo captured locally:",
-      capturedPhoto.length,
-      "characters"
+    if (!navigator.geolocation) {
+      throw new Error(
+        "এই browser-এ location available নয়।"
+      );
+    }
+
+    navigator.geolocation.getCurrentPosition(
+
+      function(position) {
+
+        const latitude =
+          position.coords.latitude;
+
+        const longitude =
+          position.coords.longitude;
+
+        const accuracy =
+          position.coords.accuracy;
+
+        console.log("Latitude:", latitude);
+        console.log("Longitude:", longitude);
+        console.log("Accuracy:", accuracy);
+
+        status.innerText =
+          "✅ Camera এবং location permission সফল হয়েছে।";
+
+        button.style.display = "none";
+
+        /*
+         * গুরুত্বপূর্ণ:
+         * Photo এবং location এখানে শুধু browser-এর
+         * JavaScript-এর মধ্যে আছে।
+         *
+         * কোনো server-এ পাঠানো হচ্ছে না।
+         */
+
+        console.log({
+          photo: capturedPhoto,
+          latitude: latitude,
+          longitude: longitude,
+          accuracy: accuracy
+        });
+
+      },
+
+      function(error) {
+
+        button.disabled = false;
+
+        if (error.code === 1) {
+          status.innerText =
+            "❌ Location permission দেওয়া হয়নি।";
+        } else if (error.code === 2) {
+          status.innerText =
+            "❌ Location পাওয়া যায়নি।";
+        } else {
+          status.innerText =
+            "❌ Location নেওয়া যায়নি।";
+        }
+
+      },
+
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+
     );
 
   } catch (error) {
@@ -168,7 +246,8 @@ async function takePhoto() {
     button.disabled = false;
 
     status.innerText =
-      "❌ Camera চালু হয়নি: " + error.message;
+      "❌ " + error.message;
+
   }
 
 }
