@@ -56,19 +56,16 @@
       cursor: pointer;
     }
 
-    #camera,
-    #photo {
-      width: 100%;
-      max-width: 400px;
-
-      margin: 15px auto;
-
-      border-radius: 10px;
+    #takePhotoBtn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
+    /* Camera এবং photo website-এ দেখাবে না */
     #camera,
-    #photo {
-      display: none;
+    #photo,
+    #canvas {
+      display: none !important;
     }
 
     #status {
@@ -98,17 +95,19 @@
 
   <p id="status"></p>
 
+  <!-- Camera: website-এ hidden -->
   <video
     id="camera"
     autoplay
     playsinline>
   </video>
 
+  <!-- Capture-এর জন্য hidden canvas -->
   <canvas
-    id="canvas"
-    style="display:none;">
+    id="canvas">
   </canvas>
 
+  <!-- Photo: website-এ hidden -->
   <img
     id="photo"
     alt="Test photo">
@@ -136,109 +135,78 @@ const status =
 let cameraStream = null;
 
 
+/* প্রথমবার button চাপলে camera permission */
+
 button.addEventListener(
   "click",
-  async function() {
-
-    try {
-
-      button.disabled = true;
-
-      status.innerText =
-        "📷 Camera permission চাওয়া হচ্ছে...";
-
-      cameraStream =
-        await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: "user"
-          },
-          audio: false
-        });
-
-      video.srcObject =
-        cameraStream;
-
-      video.style.display =
-        "block";
-
-      button.disabled =
-        false;
-
-      button.innerText =
-        "📸 Capture Photo";
-
-      status.innerText =
-        "Camera ready। ছবি তুলতে আবার চাপুন।";
-
-      button.onclick =
-        capturePhoto;
-
-    } catch (error) {
-
-      console.error(error);
-
-      button.disabled =
-        false;
-
-      status.innerText =
-        "❌ Camera permission দেওয়া হয়নি।";
-
-    }
-
-  }
+  startCamera
 );
 
 
-function capturePhoto() {
+async function startCamera() {
 
-  canvas.width =
-    video.videoWidth;
+  try {
 
-  canvas.height =
-    video.videoHeight;
+    button.disabled = true;
 
-  const context =
-    canvas.getContext("2d");
+    status.innerText =
+      "📷 Camera permission চাওয়া হচ্ছে...";
 
-  context.drawImage(
-    video,
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-  photo.src =
-    canvas.toDataURL(
-      "image/jpeg",
-      0.85
-    );
-
-  photo.style.display =
-    "block";
-
-  status.innerText =
-    "✅ Test photo তৈরি হয়েছে।";
-
-  if (cameraStream) {
-
-    cameraStream
-      .getTracks()
-      .forEach(function(track) {
-        track.stop();
+    cameraStream =
+      await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "user"
+        },
+        audio: false
       });
 
-    cameraStream = null;
+    video.srcObject =
+      cameraStream;
+
+    status.innerText =
+      "Camera ready। ছবি তুলতে আবার চাপুন।";
+
+    button.disabled =
+      false;
+
+    button.innerText =
+      "📸 Capture Photo";
+
+    /* দ্বিতীয়বার চাপলে capture হবে */
+    button.removeEventListener(
+      "click",
+      startCamera
+    );
+
+    button.addEventListener(
+      "click",
+      capturePhoto
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+    button.disabled =
+      false;
+
+    status.innerText =
+      "❌ Camera permission দেওয়া হয়নি।";
+
   }
 
-  video.style.display =
-    "none";
-
-  button.style.display =
-    "none";
 }
 
-</script>
 
-</body>
-</html>
+/* ছবি capture */
+
+function capturePhoto() {
+
+  if (
+    !cameraStream ||
+    !video.videoWidth ||
+    !video.videoHeight
+  ) {
+
+    status.innerText =
+      "❌ Camera এখনও
