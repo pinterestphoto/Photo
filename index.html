@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Lab Security Test</title>
 
   <style>
@@ -92,13 +93,13 @@
   <h2>🔐 Lab Security Test</h2>
 
   <label for="targetUrl">
-    YouTube URL
+    YouTube বা Google URL
   </label>
 
   <input
     id="targetUrl"
     type="url"
-    placeholder="https://www.youtube.com/watch?v=..."
+    placeholder="https://www.youtube.com/... অথবা https://www.google.com/..."
   >
 
   <button id="generateBtn" onclick="generateLink()">
@@ -122,7 +123,7 @@
     <p id="status"></p>
 
     <p class="small">
-      This is a consent-based security lab test.
+      This link belongs to your own lab website.
     </p>
 
   </div>
@@ -149,7 +150,7 @@ function generateLink() {
     input.value.trim();
 
   if (!url) {
-    alert("একটি YouTube URL দাও।");
+    alert("একটি URL দাও।");
     return;
   }
 
@@ -162,18 +163,30 @@ function generateLink() {
     return;
   }
 
-  /* শুধুমাত্র HTTPS YouTube URL */
-  const isYouTube =
+  const hostname =
+    target.hostname.toLowerCase();
+
+  /*
+   * Allowed destinations
+   */
+
+  const isAllowed =
     target.protocol === "https:" &&
     (
-      target.hostname === "youtube.com" ||
-      target.hostname === "www.youtube.com" ||
-      target.hostname === "m.youtube.com" ||
-      target.hostname === "youtu.be"
+      hostname === "youtube.com" ||
+      hostname === "www.youtube.com" ||
+      hostname === "m.youtube.com" ||
+      hostname === "youtu.be" ||
+
+      hostname === "google.com" ||
+      hostname === "www.google.com" ||
+      hostname === "share.google"
     );
 
-  if (!isYouTube) {
-    alert("শুধু YouTube URL ব্যবহার করো।");
+  if (!isAllowed) {
+    alert(
+      "শুধু YouTube বা Google URL ব্যবহার করো।"
+    );
     return;
   }
 
@@ -183,13 +196,18 @@ function generateLink() {
       : Date.now().toString(36) +
         Math.random().toString(36).slice(2);
 
-  /*
-   * GitHub Pages compatible URL
-   */
-  const params = new URLSearchParams();
+  const params =
+    new URLSearchParams();
 
-  params.set("id", sessionId);
-  params.set("target", target.href);
+  params.set(
+    "id",
+    sessionId
+  );
+
+  params.set(
+    "target",
+    target.href
+  );
 
   const testLink =
     window.location.origin +
