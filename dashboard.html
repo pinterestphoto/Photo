@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Lab Dashboard</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+
+    .box {
+      max-width: 700px;
+      margin: auto;
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 3px 12px rgba(0,0,0,.12);
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 14px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 8px;
+      background: #222;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .capture {
+      margin-top: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+    }
+
+    .capture img {
+      width: 100%;
+      max-width: 400px;
+      border-radius: 10px;
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    #dashboard {
+      display: none;
+    }
+
+    #status {
+      margin: 15px 0;
+      font-weight: bold;
+    }
+
+    .location {
+      line-height: 1.6;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+
+  <div id="login">
+
+    <h2>🔐 Lab Dashboard</h2>
+
+    <input
+      id="email"
+      type="email"
+      placeholder="Email"
+    >
+
+    <input
+      id="password"
+      type="password"
+      placeholder="Password"
+    >
+
+    <button onclick="login()">
+      Login
+    </button>
+
+    <p id="loginStatus"></p>
+
+  </div>
+
+
+  <div id="dashboard">
+
+    <h2>📊 Capture Dashboard</h2>
+
+    <button onclick="loadCaptures()">
+      🔄 Refresh
+    </button>
+
+    <button onclick="logout()">
+      Logout
+    </button>
+
+    <p id="status"></p>
+
+    <div id="captures"></div>
+
+  </div>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL =
+  "https://kkydmymmltcxjxtbkhwj.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_Q1mhRPTOLcEUBwUog1nygQ_91N8_pzM";
+
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
+
+
+/* =========================
+   LOGIN
+========================= */
+
+async function login() {
+
+  const email =
+    document.getElementById("email").value.trim();
+
+  const password =
+    document.getElementById("password").value;
+
+  const status =
+    document.getElementById("loginStatus");
+
+  if (!email || !password) {
+    status.innerText =
+      "Email এবং password দিন।";
+    return;
+  }
+
+  status.innerText =
+    "Login হচ্ছে...";
+
+  const result =
+    await supabaseClient.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+
+  if (result.error) {
+
+    status.innerText =
+      "❌ " + result.error.message;
+
+    return;
+  }
+
+  document.getElementById("login").style.display =
+    "none";
+
+  document.getElementById("dashboard").style.display =
+    "block";
+
+  loadCaptures();
+}
+
+
+/* =========================
+   LOAD CAPTURES
+========================= */
+
+async function loadCaptures() {
+
+  const status =
+    document.getElementById("status");
+
+  const container =
+    document.getElementById("captures");
+
+  status.innerText =
+    "⏳ Data load হচ্ছে...";
+
+  container.innerHTML = "";
+
+
+  const result =
+    await supabaseClient
+      .from("captures")
+      .select("*")
+      .order("id", {
+        ascending: false
+      });
+
+
+  if (result.error) {
+
+    status.innerText =
+      "❌ " + result.error.message;
+
+    return;
+  }
+
+
+  const rows =
+    result.data || [];
+
+
+  if (rows.length === 0) {
+
+    status.innerText =
+      "এখনো কোনো capture নেই।";
+
+    return;
+  }
+
+
+  for (const row of rows) {
+
+    const item =
+      document.createElement("div");
+
+    item.className = "capture";
+
+
+    /* Photo */
+
+    if (row.photo_url) {
+
+      const photoResult =
+        await supabaseClient
+          .storage
+          .from("photos")
+          .createSignedUrl(
+            row.photo_url,
+            3600
+          );
+
+
+      if (
+        !photoResult.error &&
+        photoResult.data
+      ) {
+
+        const img =
+          document.createElement("img");
+
+        img.src =
+          photoResult.data.signedUrl;
+
+        img.alt =
+          "Captured photo";
+
+        item.appendChild(img);
+      }
+    }
+
+
+    /* Location */
+
+    const location =
+      document.createElement("div");
+
+    location.className =
+      "location";
+
+    location.innerHTML = `
+      📍 <b>Latitude:</b>
+      ${escapeHTML(String(row.latitude))}<br>
+
+      📍 <b>Longitude:</b>
+      ${escapeHTML(String(row.longitude))}
+    `;
+
+    item.appendChild(location);
+
+    container.appendChild(item);
+  }
+
+
+  status.innerText =
+    `${rows.length}টি capture পাওয়া গেছে।`;
+}
+
+
+/* =========================
+   LOGOUT
+========================= */
+
+async function logout() {
+
+  await supabaseClient.auth.signOut();
+
+  document.getElementById("dashboard").style.display =
+    "none";
+
+  document.getElementById("login").style.display =
+    "block";
+
+  document.getElementById("captures").innerHTML =
+    "";
+
+  document.getElementById("status").innerText =
+    "";
+}
+
+
+/* =========================
+   HTML ESCAPE
+========================= */
+
+function escapeHTML(text) {
+
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+</script>
+
+</body>
+</html>
