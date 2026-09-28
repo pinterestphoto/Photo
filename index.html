@@ -15,7 +15,6 @@
       margin: 0;
       min-height: 100vh;
       background: #f5f5f5;
-
       display: flex;
       justify-content: center;
       align-items: center;
@@ -93,7 +92,7 @@
   <h2>🔐 Lab Security Test</h2>
 
   <label for="targetUrl">
-    Google বা YouTube URL
+    YouTube URL
   </label>
 
   <input
@@ -123,7 +122,7 @@
     <p id="status"></p>
 
     <p class="small">
-      This link belongs to your own lab website.
+      This is a consent-based security lab test.
     </p>
 
   </div>
@@ -150,7 +149,7 @@ function generateLink() {
     input.value.trim();
 
   if (!url) {
-    alert("একটি URL দাও।");
+    alert("একটি YouTube URL দাও।");
     return;
   }
 
@@ -163,29 +162,19 @@ function generateLink() {
     return;
   }
 
-  let slug = "";
+  /* শুধুমাত্র HTTPS YouTube URL */
+  const isYouTube =
+    target.protocol === "https:" &&
+    (
+      target.hostname === "youtube.com" ||
+      target.hostname === "www.youtube.com" ||
+      target.hostname === "m.youtube.com" ||
+      target.hostname === "youtu.be"
+    );
 
-  if (
-    target.hostname.includes("youtube.com") ||
-    target.hostname.includes("youtu.be")
-  ) {
-
-    const videoId =
-      target.searchParams.get("v") ||
-      target.pathname.replace("/", "").trim();
-
-    slug =
-      "youtube-" + (videoId || "video");
-
-  } else {
-
-    const host =
-      target.hostname
-        .replace("www.", "")
-        .split(".")[0];
-
-    slug =
-      host + "-test";
+  if (!isYouTube) {
+    alert("শুধু YouTube URL ব্যবহার করো।");
+    return;
   }
 
   const sessionId =
@@ -194,14 +183,18 @@ function generateLink() {
       : Date.now().toString(36) +
         Math.random().toString(36).slice(2);
 
+  /*
+   * GitHub Pages compatible URL
+   */
+  const params = new URLSearchParams();
+
+  params.set("id", sessionId);
+  params.set("target", target.href);
+
   const testLink =
     window.location.origin +
-    "/test.html/" +
-    encodeURIComponent(slug) +
-    "?id=" +
-    encodeURIComponent(sessionId) +
-    "&target=" +
-    encodeURIComponent(target.href);
+    "/Photo/test.html?" +
+    params.toString();
 
   generatedLink.value =
     testLink;
@@ -246,4 +239,4 @@ async function copyLink() {
 </script>
 
 </body>
-  </html>
+</html>
