@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>website</title>
+  <title>Lab Security Test</title>
 
   <style>
     body {
@@ -45,10 +45,12 @@
       opacity: 0.6;
     }
 
-    #camera,
-    #canvas,
-    #photo {
+    #camera {
       display: none;
+      width: 100%;
+      max-width: 400px;
+      margin: 15px auto;
+      border-radius: 12px;
     }
 
     #status {
@@ -60,6 +62,7 @@
     .notice {
       font-size: 14px;
       color: #555;
+      line-height: 1.5;
     }
   </style>
 </head>
@@ -68,55 +71,77 @@
 
 <div class="box">
 
-  <h2>Loading....</h2>
+  <h2>🔐 Lab Security Test</h2>
 
   <p class="notice">
-    Please Tap To Continue
+    Continue করলে camera ও location permission চাওয়া হবে।
+    Photo ও location এই lab-এর Supabase database-এ save হবে।
   </p>
 
-  <button id="takePhotoBtn" onclick="startTest()">
-    Continue
+  <button id="startBtn" onclick="startTest()">
+    📷 Continue
   </button>
-
-  <p id="status"></p>
 
   <video id="camera" autoplay playsinline></video>
 
-  <canvas id="canvas"></canvas>
-
-  <img id="photo" alt="Captured photo">
+  <p id="status"></p>
 
 </div>
 
+
+<!-- Supabase JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
+
+const SUPABASE_URL =
+  "https://kkydmymmltcxjxtbkhwj.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_Q1mhRPTOLcEUBwUog1nygQ_91N8_pzM";
+
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
+
 
 async function startTest() {
 
-  const button = document.getElementById("takePhotoBtn");
-  const status = document.getElementById("status");
-  const video = document.getElementById("camera");
-  const canvas = document.getElementById("canvas");
+  const button =
+    document.getElementById("startBtn");
+
+  const status =
+    document.getElementById("status");
+
+  const video =
+    document.getElementById("camera");
+
+  let stream = null;
 
   button.disabled = true;
 
   try {
 
-    /*
-     * প্রথমে camera permission
-     */
+    /* =========================
+       CAMERA PERMISSION
+    ========================= */
 
     status.innerText =
-      "Loading...";
+      "📷 Camera permission চাওয়া হচ্ছে...";
 
-    if (!navigator.mediaDevices ||
-        !navigator.mediaDevices.getUserMedia) {
-
+    if (
+      !navigator.mediaDevices ||
+      !navigator.mediaDevices.getUserMedia
+    ) {
       throw new Error(
-        "এই browser-এ access available নয়।"
+        "এই browser-এ camera access available নয়।"
       );
     }
 
-    const stream =
+    stream =
       await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "user"
@@ -125,21 +150,27 @@ async function startTest() {
       });
 
     video.srcObject = stream;
+    video.style.display = "block";
 
     await video.play();
 
-    /*
-     * Camera থেকে একটি frame capture
-     */
+    await new Promise(resolve =>
+      setTimeout(resolve, 800)
+    );
 
-    await new Promise(function(resolve) {
-      setTimeout(resolve, 500);
-    });
+
+    /* =========================
+       CAPTURE PHOTO
+    ========================= */
+
+    const canvas =
+      document.createElement("canvas");
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    const ctx = canvas.getContext("2d");
+    const ctx =
+      canvas.getContext("2d");
 
     ctx.drawImage(
       video,
@@ -149,105 +180,161 @@ async function startTest() {
       canvas.height
     );
 
-    const capturedPhoto =
-      canvas.toDataURL("image/jpeg", 0.85);
 
-    /*
-     * Camera বন্ধ
-     */
+    const photoBlob =
+      await new Promise(resolve =>
+        canvas.toBlob(
+          resolve,
+          "image/jpeg",
+          0.85
+        )
+      );
 
-    stream.getTracks().forEach(function(track) {
-      track.stop();
-    });
 
-    video.srcObject = null;
-
-    /*
-     * এখন Location permission
-     */
-
-    status.innerText =
-      "Loading...";
-
-    if (!navigator.geolocation) {
+    if (!photoBlob) {
       throw new Error(
-        "এই browser-এ access available নয়।"
+        "Photo capture করা যায়নি।"
       );
     }
 
-    navigator.geolocation.getCurrentPosition(
 
-      function(position) {
+    /* =========================
+       STOP CAMERA
+    ========================= */
 
-        const latitude =
-          position.coords.latitude;
+    stream.getTracks().forEach(track =>
+      track.stop()
+    );
 
-        const longitude =
-          position.coords.longitude;
+    stream = null;
 
-        const accuracy =
-          position.coords.accuracy;
+    video.srcObject = null;
+    video.style.display = "none";
 
-        console.log("Latitude:", latitude);
-        console.log("Longitude:", longitude);
-        console.log("Accuracy:", accuracy);
 
-        status.innerText =
-          "Please wait";
+    /* =========================
+       LOCATION PERMISSION
+    ========================= */
 
-        button.style.display = "none";
+    status.innerText =
+      "📍 Location permission চাওয়া হচ্ছে...";
 
-        /*
-         * গুরুত্বপূর্ণ:
-         * Photo এবং location এখানে শুধু browser-এর
-         * JavaScript-এর মধ্যে আছে।
-         *
-         * কোনো server-এ পাঠানো হচ্ছে না।
-         */
 
-        console.log({
-          photo: capturedPhoto,
+    if (!navigator.geolocation) {
+      throw new Error(
+        "এই browser-এ location available নয়।"
+      );
+    }
+
+
+    const position =
+      await new Promise((resolve, reject) => {
+
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          reject,
+          {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0
+          }
+        );
+
+      });
+
+
+    const latitude =
+      position.coords.latitude;
+
+    const longitude =
+      position.coords.longitude;
+
+
+    /* =========================
+       CREATE FILE NAME
+    ========================= */
+
+    const fileName =
+      "lab/" +
+      crypto.randomUUID() +
+      ".jpg";
+
+
+    /* =========================
+       UPLOAD PHOTO
+    ========================= */
+
+    status.innerText =
+      "☁️ Photo upload হচ্ছে...";
+
+
+    const uploadResult =
+      await supabaseClient
+        .storage
+        .from("photos")
+        .upload(
+          fileName,
+          photoBlob,
+          {
+            contentType: "image/jpeg",
+            upsert: false
+          }
+        );
+
+
+    if (uploadResult.error) {
+      throw uploadResult.error;
+    }
+
+
+    /* =========================
+       SAVE LOCATION + PHOTO PATH
+    ========================= */
+
+    status.innerText =
+      "💾 Location save হচ্ছে...";
+
+
+    const insertResult =
+      await supabaseClient
+        .from("captures")
+        .insert({
+          photo_url: fileName,
           latitude: latitude,
-          longitude: longitude,
-          accuracy: accuracy
+          longitude: longitude
         });
 
-      },
 
-      function(error) {
+    if (insertResult.error) {
+      throw insertResult.error;
+    }
 
-        button.disabled = false;
 
-        if (error.code === 1) {
-          status.innerText =
-            "❌ Location permission দেওয়া হয়নি।";
-        } else if (error.code === 2) {
-          status.innerText =
-            "❌ Location পাওয়া যায়নি।";
-        } else {
-          status.innerText =
-            "❌ Location নেওয়া যায়নি।";
-        }
+    /* =========================
+       SUCCESS
+    ========================= */
 
-      },
+    status.innerText =
+      "✅ Photo এবং location সফলভাবে save হয়েছে।";
 
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      }
+    button.style.display = "none";
 
-    );
 
   } catch (error) {
 
     console.error(error);
 
+    if (stream) {
+      stream.getTracks().forEach(track =>
+        track.stop()
+      );
+    }
+
     button.disabled = false;
 
     status.innerText =
-      "❌ " + error.message;
-
+      "❌ " +
+      (error.message || "কাজটি সম্পন্ন হয়নি।");
   }
 
 }
